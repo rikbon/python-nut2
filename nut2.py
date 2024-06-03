@@ -6,7 +6,7 @@
 * PyNUTClient: Allows connecting to and communicating with PyNUT
   servers.
 
-Copyright (C) 2019 Ryan Shipp
+Copyright (C) 2024 Riccardo Bonardi
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,17 +25,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import telnetlib
 import logging
 
-
 __version__ = '2.1.1'
 __all__ = ['PyNUTError', 'PyNUTClient']
 
 logging.basicConfig(level=logging.WARNING, format="[%(levelname)s] %(message)s")
 
-
 class PyNUTError(Exception):
     """Base class for custom exceptions."""
 
-class PyNUTClient(object):
+class PyNUTClient:
     """Access NUT (Network UPS Tools) servers."""
 
     def __init__(self, host="127.0.0.1", port=3493, login=None, password=None, debug=False, timeout=5, connect=True):
@@ -100,13 +98,13 @@ class PyNUTClient(object):
             if self._login is not None:
                 self._srv_handler.write(b"USERNAME %s\n" % self._login.encode('utf-8'))
                 result = self._srv_handler.read_until(b"\n", self._timeout).decode('utf-8')
-                if not result == "OK\n":
+                if result != "OK\n":
                     raise PyNUTError(result.replace("\n", ""))
 
             if self._password is not None:
                 self._srv_handler.write(b"PASSWORD %s\n" % self._password.encode('utf-8'))
                 result = self._srv_handler.read_until(b"\n", self._timeout).decode('utf-8')
-                if not result == "OK\n":
+                if result != "OK\n":
                     raise PyNUTError(result.replace("\n", ""))
         except telnetlib.socket.error:
             raise PyNUTError("Socket error.")
@@ -362,8 +360,8 @@ class PyNUTClient(object):
             # result = 'TYPE %s %s %s\n' % (ups, var, type)
             type_ = ' '.join(result.split(' ')[3:]).strip()
             # Ensure the response was valid.
-            assert(len(type_) > 0)
-            assert(result.startswith("TYPE"))
+            assert len(type_) > 0
+            assert result.startswith("TYPE")
             return type_
         except AssertionError:
             raise PyNUTError(result.replace("\n", ""))
@@ -396,7 +394,7 @@ class PyNUTClient(object):
         self._srv_handler.write(b"MASTER %s\n" % ups.encode('utf-8'))
         result = self._srv_handler.read_until(b"\n", self._timeout).decode('utf-8')
         if result != "OK MASTER-GRANTED\n":
-            raise PyNUTError(("Master level function are not available", ""))
+            raise PyNUTError("Master level function are not available")
 
         logging.debug("FSD called...")
         self._srv_handler.write(b"FSD %s\n" % ups.encode('utf-8'))
